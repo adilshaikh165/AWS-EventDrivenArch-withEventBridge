@@ -72,3 +72,163 @@ Till now we have successfully configured our Event Generator.Now, our real proje
 let us know bit about the Event-Bridge
 
 Amazon EventBridge is a serverless event bus service that makes it easy to connect your applications with data from a variety of sources. EventBridge delivers a stream of real-time data from your own applications, Software-as-a-Service (SaaS) applications, and AWS services and routes that data to targets such as AWS Lambda. You can set up routing rules to determine where to send your data to build application architectures that react in real time to all of your data sources.
+
+The key concept that are mandatory in understanding the Event Bridges are :
+
+- Events - An event indicates a change in an environment. As you can see in high level design the Events can be SaaS Apps, Microservices and any of your custom app.
+
+- Rules - A rule matches incoming events and routes them to targets for processing. A single rule can route to multiple targets, all of which are processed in parallel. Rules aren't processed in a particular order. This enables different parts of an organization to look for and process the events that are of interest to them. A rule can customize the JSON sent to the target, by passing only certain parts or by overwriting it with a constant.
+
+- Targets - A target processes events. Targets can include Amazon EC2 instances, Lambda functions, Kinesis streams, Amazon ECS tasks, Step Functions state machines, Amazon SNS topics, Amazon SQS queues, and built-in targets. A target receives events in JSON format.
+
+- Event buses - An event bus receives events. When you create a rule, you associate it with a specific event bus, and the rule is matched only to events received by that event bus. Your account has one default event bus, which receives events from AWS services. You can create custom event buses to receive events from your custom applications. You can also create partner event buses to receive events from SaaS partner applications.
+
+We will use Event Bridge to create an event bus, route events to different targets like SNS, API Gateway and Step Function in our case,and use scheduling expressions to create recurring events.
+
+Let's create our First Event Bridge and Target
+
+# Event Bridge and Target
+
+![image](https://user-images.githubusercontent.com/98637502/216837391-e1c6a821-35a4-45e3-bca2-9f822973534c.png)
+
+you will create a custom EventBridge event bus, Orders, and an EventBridge rule, OrderDevRule, which matches all events sent to the Orders event bus and sends the events to a CloudWatch Logs log group, /aws/events/orders. See the diagram above:
+
+The technique of logging all events to CloudWatch Logs is useful when implementing EventBridge rules.
+
+## Create a Custom Event Bus
+
+1. Open The [AWS Management Console for the Event Bridge](https://ap-southeast-1.console.aws.amazon.com/events/home?region=ap-southeast-1#/).
+
+2. On the EventBridge homepage, under Events, select Event buses from the left navigation.
+
+![EB1](https://user-images.githubusercontent.com/98637502/216837555-8aa9ca08-50e4-484e-9116-9c9a7e851d9e.jpg)
+
+3. Click Create event bus.
+
+![EB2](https://user-images.githubusercontent.com/98637502/216837572-015e38b1-482d-421c-abd1-93c0406e55c1.jpg)
+
+4. Name the event bus Orders.
+
+5. Leave Event archive and Schema discovery disabled, Resource-based policy blank.
+
+6. Click Create.
+
+![EB3](https://user-images.githubusercontent.com/98637502/216837598-7f75ddd7-72f0-4b4f-b79f-56a484a05a7a.jpg)
+
+## Set up Amazon CloudWatch target
+
+1. From the left-hand menu, select Rules.
+
+2. From the Event bus dropdown, select the Orders event bus
+
+3. Click Create rule
+
+![EB4](https://user-images.githubusercontent.com/98637502/216837646-5995b947-a238-4e15-8fa0-629e178f0116.jpg)
+
+4. Define rule detail:
+
+ - Add OrdersDevRule as the Name of the rule
+ 
+ - Add Catchall rule for development purposes for Description
+ 
+ - Select Rule with an event pattern for the Rule type
+ 
+![EB5](https://user-images.githubusercontent.com/98637502/216837691-6557e5b4-3b34-4c2d-88ef-3c6095896a29.jpg)
+
+5. In the next step, Build event pattern
+
+![EB6](https://user-images.githubusercontent.com/98637502/216837720-c939f5a4-1a77-46f6-952a-22d19c20f898.jpg)
+
+Under Event pattern, further down the screen, enter the following pattern to catch all events from com.aws.orders:
+
+```bash
+{
+   "source": ["com.aws.orders"]
+}
+```
+
+Select next.
+
+6. Select your rule target:
+
+ - From the Target dropdown, select CloudWatch log group
+ 
+ - Name your log group /aws/events/orders
+ 
+![EB7](https://user-images.githubusercontent.com/98637502/216837799-d6f9d08e-ab51-48f0-9150-acbd458b1099.jpg)
+
+7. Skip through the configure tags section, review your rule configuration and click Create.
+
+## Test your Dev rule
+
+1. Select the EventBridge tab in the Event Generator
+
+2. Make sure that the Event Generator is populated with the following :
+  
+  - AWS Region should be to the region in which you are running the workshop
+  - Event Bus selected to Orders
+  - Source should be com.aws.orders
+  - In the Detail Type add Order Notification
+  - JSON payload for the Detail Template should be:
+  
+  ```bash
+  {
+   "category": "lab-supplies",
+   "value": 415,
+   "location": "eu-west"
+}
+```
+
+![EB8](https://user-images.githubusercontent.com/98637502/216837904-7e6f8e9f-e301-4652-a414-4a94c33d788b.jpg)
+
+3. Click Publish.
+
+4. Open the [AWS Management Console for Cloud Watch](https://ap-southeast-1.console.aws.amazon.com/cloudwatch/home?region=ap-southeast-1#).
+
+5. Choose Log groups in the left navigation and select the /aws/events/orders log group.
+
+![EB9](https://user-images.githubusercontent.com/98637502/216837988-38fc7f9b-399c-49da-a0e6-d3c46e92e95e.jpg)
+
+6. Select the Log stream.
+
+![EB10](https://user-images.githubusercontent.com/98637502/216838000-ae6ff28b-9e19-47c4-bd7b-ab542673a869.jpg)
+
+7. Toggle the log event to verify that you received the event.
+
+![EB11](https://user-images.githubusercontent.com/98637502/216838034-af73b6fd-e901-46d2-abbd-9406859d4e1f.jpg)
+
+## Review event structure
+
+In the following sections, you will use event data to implement EventBridge custom rules to route events. Due to the OrdersDevRule that you created in this section, all events to the Orders event bus will be sent to CloudWatch Logs, which you can use to view sample data in order to implement and troubleshoot rules matching logic.
+
+For your reference:
+
+```bash
+{
+    "version": "0",
+    "id": "c04cc8c1-283c-425e-8cf6-878bbc67a628",
+    "detail-type": "Order Notification",
+    "source": "com.aws.orders",
+    "account": "111111111111",
+    "time": "2020-02-20T23:10:29Z",
+    "region": "us-west-2",
+    "resources": [],
+    "detail": {
+        "category": "lab-supplies",
+        "value": 415,
+        "location": "eu-west"
+    }
+}
+```
+
+
+
+
+
+
+
+
+
+
+
+
