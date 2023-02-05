@@ -221,6 +221,116 @@ For your reference:
 }
 ```
 
+## Working with EventBridge rules
+
+![image](https://user-images.githubusercontent.com/98637502/216838150-4cd4d407-4ba9-4a5d-a88a-81272d42b2ab.png)
+
+Rules match incoming events and routes them to targets for processing. A single rule can route to multiple targets, all of which are processed in parallel. Rules aren't processed in a particular order. A rule can customize the JSON sent to the target, by passing only certain parts or by overwriting it with a constant. EventBridge supports 28+ AWS service targets!
+
+In this project, you will walk through the steps to create an Orders event bus rule to match an event with a com.aws.orders source and to send the event to an Amazon API Gateway endpoint, invoke a AWS Step Function, and send events to an Amazon Simple Notification Service (Amazon SNS) topic.
+
+## API Destination End Point
+
+### Identify the API URL
+
+Open the [AWS Management Console for Cloud formation](https://ap-southeast-1.console.aws.amazon.com/cloudformation/home?region=ap-southeast-1#/stacks). You can find the API URL for this challenge in the Outputs of the CloudFormation Stack with a name containing ApiUrl.
+
+![APIURL](https://user-images.githubusercontent.com/98637502/216838326-47fc8bb6-a6db-4ec0-8f2e-0fc106ec3120.jpg)
+
+### Configure the EventBridge API Destination with basic auth security
+
+1. Open the [AWS Management Console for Event Bridge](https://ap-southeast-1.console.aws.amazon.com/events/home?region=ap-southeast-1#/).
+
+2. On the EventBridge homepage, select API destinations from the left navigation.
+
+3. On the API destinations page, select Create API destination.
+
+![CreateAPIDestination](https://user-images.githubusercontent.com/98637502/216838445-ec21ef7f-bad3-4a0a-b288-cce73205c949.jpg)
+
+4. On the Create API destination page
+
+ - Enter api-destination as the Name
+ - Enter the API URL identified in Step 1 as the API destination endpoint
+ - Select POST as the HTTP method
+ - Select Create a new connection for the Connection
+ - Enter basic-auth-connection as the Connection name
+ - Select Basic (Username/Password) as the Authorization type
+ - Enter your userName
+ - Enter your Password
+
+![CreateAPIDestinationConfig](https://user-images.githubusercontent.com/98637502/216838556-5859a75f-ba65-4656-9c3c-ed30aeac0f7d.jpg)
+
+5. Click Create
+
+### Configure an EventBridge rule to target the EventBridge API Destination
+
+1. From the left-hand menu, select Rules.
+
+2. From the Event bus dropdown, select the Orders event bus.
+
+3. Click Create rule
+
+4. On the Define rule detail page
+ - Enter OrdersEventsRule as the Name of the rule
+ - Enter Send com.aws.orders source events to API Destination for Description
+
+5. Under Build event pattern
+ - Choose Other for your Event source
+ - Copy and paste the following into the Event pattern, and select Next to specify your target:
+
+```bash
+{
+    "source": [
+        "com.aws.orders"
+    ]
+}
+```
+
+![EBruletargetAPI1](https://user-images.githubusercontent.com/98637502/216838763-681d106b-e9b2-440a-94b0-7c1c68bde5b6.jpg)
+
+6. Select your rule target:
+
+ - Select EventBridge API destination as the target type.
+ - Select api-destination from the list of existing API destinations
+
+![EBruletargetAPI2](https://user-images.githubusercontent.com/98637502/216838780-8b077eff-07b2-44d4-84a2-4ed0ce3321bd.jpg)
+
+7. Click Next and finish walking through the rest of the walk-through to create the rule.
+
+### Send test Orders event
+
+Using the Event Generator, send the following Order Notification events from the source com.aws.orders:
+
+```bash
+{ "category": "lab-supplies", "value": 415, "location": "us-east" }
+```
+
+### Verify API Destination
+
+If the event sent to the Orders event bus matches the pattern in your rule, then the event will be sent to an API Gateway REST API endpoint.
+
+1. Open the [AWS Management Console for Cloud Watch Log Group](https://ap-southeast-1.console.aws.amazon.com/cloudwatch/home?region=ap-southeast-1#logsV2:log-groups).
+
+2. Select the Log group with an API-Gateway-Execution-Logs prefix.
+
+![VerifyApiDestination](https://user-images.githubusercontent.com/98637502/216838959-d7727130-0a79-4bf5-b8ce-31208a98199f.jpg)
+
+3. Select the Log stream.
+
+![SelectAPILogStream](https://user-images.githubusercontent.com/98637502/216838978-93ed0f2c-b764-47c9-8a8b-ddf05e0e98e6.jpg)
+
+4. Toggle the log event to verify the basic authorization was successful
+
+![APILogEvent](https://user-images.githubusercontent.com/98637502/216839001-4772d4a1-9ea9-4c16-aff0-f5cd300dbdb0.jpg)
+
+And hereby you have successfully created your first custom event.
+
+
+
+
+
+
+
 
 
 
