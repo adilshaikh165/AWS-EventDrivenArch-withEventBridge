@@ -590,6 +590,8 @@ This will schedule a message to be delivered every minute, Monday through Friday
 
 And thereby we hace completed our Event Driven Architecture using Amazon Event Bridge!!!
 
+Make sure that your terminate each of the service/resources to be safe from the unexpected surprise bill at the end of the month 💀 !!
+
 
 
 
