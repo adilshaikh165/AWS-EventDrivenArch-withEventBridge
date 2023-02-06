@@ -339,9 +339,6 @@ Use the EventBridge Console to:
   "source": [
     "com.aws.orders"
   ],
-  "detail-type": [
-    "Order Notification"
-  ],
   "detail": {
     "location": [
       "eu-west",
@@ -445,9 +442,6 @@ Use the EventBridge Console to:
 {
   "source": [
     "com.aws.orders"
-  ],
-  "detail-type": [
-    "Order Notification"
   ],
   "detail": {
     "location": [
