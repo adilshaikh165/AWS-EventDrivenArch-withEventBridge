@@ -323,7 +323,274 @@ If the event sent to the Orders event bus matches the pattern in your rule, then
 
 ![APILogEvent](https://user-images.githubusercontent.com/98637502/216839001-4772d4a1-9ea9-4c16-aff0-f5cd300dbdb0.jpg)
 
-And hereby you have successfully created your first custom event.
+And hereby you have successfully created your first custom event(API Gateway).
+
+## Step Function End Point
+
+###  Implement an EventBridge rule to target Step Functions
+
+Use the EventBridge Console to:
+
+1. Add a rule to the Orders event bus with the name "EUOrdersRule"
+2. Define an event pattern to match events with a detail location in "eu-west or eu-east".
+
+```bash
+{
+  "source": [
+    "com.aws.orders"
+  ],
+  "detail-type": [
+    "Order Notification"
+  ],
+  "detail": {
+    "location": [
+      "eu-west",
+      "eu-east"
+    ]
+  }
+}
+
+```
+
+4. Target the OrderProcessing Step Functions state machine
+
+You can refer this simple sample event to create your event pattern:
+```bash
+{
+    "version": "0",
+    "id": "6e6b1f6d-48f8-5dff-c2d2-a6f22c2e0086",
+    "detail-type": "Order Notification",
+    "source": "com.aws.orders",
+    "account": "111111111111",
+    "time": "2020-02-23T15:35:41Z",
+    "region": "us-east-1",
+    "resources": [],
+    "detail": {
+        "category": "office-supplies",
+        "value": 300,
+        "location": "eu-west"
+    }
+}
+```
+
+make sure to enclose every value in any array or an object format or else it'll generate an "Event Patern is not valid " error.
+For example :
+```bash
+"version" : ["0"] 
+```
+
+Also, make sure to write the target service ARN in resource and fill the account and region with your AWS account number and region you choose for the project.
+
+![StepFunction](https://user-images.githubusercontent.com/98637502/216886226-c58045a1-4ed7-4fd0-993f-2b13d9476c93.jpg)
+
+###  Send test EU Orders events
+
+To verify our event is reached to it's desired destination (Step Function) we'll generate an event using Event Generator and send the following "Order Notification" events from the source "com.aws.orders":
+
+```bash
+{ "category": "office-supplies", "value": 300, "location": "eu-west" }
+
+{ "category": "tech-supplies", "value": 3000, "location": "eu-east" }
+```
+
+### Verify Step Functions workflow execution
+
+If the event sent to the Orders event bus matches the pattern in your rule, then the event will be sent to the OrderProcessing Step Functions state machine for execution.
+
+1. Open the [AWS Management Console for Step Function](https://ap-southeast-1.console.aws.amazon.com/states/home?region=ap-southeast-1).
+
+2. On the Step Functions homepage, open the left hand navigation and select State machines.
+
+![State Machine](https://user-images.githubusercontent.com/98637502/216887127-41a9591c-a805-4eb7-b3bd-c6700b16ef17.jpg)
+
+3. Enter OrderProcessing in the Search for state machines box and verify the state machine execution has succeeded.
+
+Note :
+
+If you are not seeing any executions in your OrderProcessing state machine after successfully publishing an event, it is possible that there is an issue with the event or with the configuration of the state machine. Here are a few things to check:
+
+1. Verify that the event was published to the correct EventBridge bus and with the correct event pattern. Make sure that the event pattern you used to create the target for your state machine matches the event that was published.
+
+2. Check the CloudWatch logs for the state machine to see if there were any errors or exceptions that prevented the state machine from being triggered by the event.
+
+3. Check the state machine definition to verify that it is correctly configured to listen to events from EventBridge. Ensure that the state machine is set up as a target for the EventBridge rule that you created.
+
+4. Verify that the IAM role associated with the state machine has the necessary permissions to access EventBridge and start executions.
+
+5. Check the event details in the EventBridge console to see if there were any errors or issues with the event.
+
+By checking these factors, you should be able to identify and resolve the issue with the executions not appearing in your OrderProcessing state machine.
+
+And upto this point we have successfully completed a Step Function event task.
+
+And now we have to use the similar approach for SNS Topic,let's take a deep dive.
+
+## SNS Topic Challenge
+
+Our primary goal is to process only orders from US locations (us-west or us-east) that are lab-supplies using a Amazon SNS target (Orders). Similar to the previous use case, but using SNS.
+
+let's go for it!!
+
+## Implement an EventBridge rule to target SNS
+
+Use the EventBridge Console to:
+
+1. Add a rule to the Orders event bus with the name "USLabSupplyRule"
+
+2. With an event pattern to match events with a detail location in us-west or us-east, and a detail category with lab-supplies.
+
+```bash
+{
+  "source": [
+    "com.aws.orders"
+  ],
+  "detail-type": [
+    "Order Notification"
+  ],
+  "detail": {
+    "location": [
+      "us-west",
+      "us-east"
+    ],
+    "category": "lab-supplies"
+  }
+}
+```
+
+3. Target the Orders SNS topic
+
+![Rule for SNS Topic](https://user-images.githubusercontent.com/98637502/216888304-226a6524-1949-4cb9-95a8-0be4d671c880.jpg)
+
+Here, is the sample event to refer :
+
+```bash
+{
+    "version": "0",
+    "id": "6e6b1f6d-48f8-5dff-c2d2-a6f22c2e0086",
+    "detail-type": "Order Notification",
+    "source": "com.aws.orders",
+    "account": "111111111111",
+    "time": "2020-02-23T15:35:41Z",
+    "region": "us-east-1",
+    "resources": [],
+    "detail": {
+        "category": "lab-supplies",
+        "value": 300,
+        "location": "us-east"
+    }
+}
+```
+
+### Send test US Orders events
+
+Note : One of the following events should match the event rule pattern and one should not. Use CloudWatch Logs to verify events that were successfully sent to EventBridge but were not delivered to the target.
+
+To verify our event is reached to it's desired destination (SNS Topic) we'll generate an event using Event Generator and send the following "Order Notification" events from the source "com.aws.orders":
+
+```bash
+
+{ "category": "lab-supplies", "value": 415, "location": "us-east" }
+
+{ "category": "office-supplies", "value": 1050, "location": "us-west", "signature": [ "John Doe" ] }
+
+```
+
+###  Verify SNS topic
+
+If the event sent to the Orders event bus matches the pattern in your rule, then the event will be sent to the Orders SQS Queue (via Orders SNS Topic).
+
+1. Open the [AWS Management Console for SQS](https://ap-southeast-1.console.aws.amazon.com/sqs/v2/home?region=ap-southeast-1#/queues) in a new tab.
+
+2. On the SQS homepage, select the Orders queue.
+
+![Orders Queue](https://user-images.githubusercontent.com/98637502/216888814-27f38bfe-6880-4fa8-af62-addeacc016f6.jpg)
+
+3. Select the Send and receive messages button.
+
+![SNS2](https://user-images.githubusercontent.com/98637502/216888964-5ee1f2e0-1c1b-40b9-bacc-5e2ad5e9cd95.jpg)
+
+4. Select Poll for Messages and verify the first message was delivered and the second was not.
+
+5. To clean up, select the event, select the Delete button, and select the Delete button again on the Delete Messages confirmation dialog.
+
+Note :
+
+If you are not seeing your messages in SQS Queue then their can be few reasons that you should check :
+
+1. Check if the rule is correctly associated with the SNS topic and the SQS queue. Confirm that the ARN of the SNS topic in the rule is correct and that the SQS queue is correctly specified as the target of the rule.
+
+2. Verify that the event pattern in the rule matches the events generated. The events must match the event pattern for the rule to trigger and send messages to the SQS queue.
+
+3. Ensure that the SNS topic has sufficient permissions to publish messages to the SQS queue. You can check this in the SNS topic's access policy.
+
+4. Confirm that the SQS queue has sufficient permissions to receive messages from the SNS topic. You can check this in the SQS queue's access policy.
+
+5. Make sure that the SQS queue is not configured to delay delivery of messages. If it is, messages will not be immediately available in the queue.
+
+6. Check if there are any errors in the CloudWatch logs. This could indicate a problem with the rule or the target.
+
+Congratulations, We have successfully completed our SNS Challenge.
+
+We, can also schedule expressions for rule.
+
+## Scheduling expressions for rules
+
+You can create rules that self-trigger on an automated schedule in EventBridge using cron or rate expressions. All scheduled events use UTC time zone and the minimum precision for schedules is 1 minute.
+
+EventBridge supports cron expressions and rate expressions. Rate expressions are simpler to define but don't offer the fine-grained schedule control that cron expressions support. For example, with a cron expression, you can define a rule that triggers at a specified time on a certain day of each week or month. In contrast, rate expressions trigger a rule at a regular rate, such as once every hour or once every day.
+
+Let's give it a try!
+
+### Create a scheduled Orders Reconciliation rule
+
+1. Open the [AWS Management Console for Event Bridge](https://ap-southeast-1.console.aws.amazon.com/events/home?region=ap-southeast-1#/) in a new tab.
+
+2. On the EventBridge homepage, select Rules from the left-hand menu.
+
+3. Select the default event bus and click the Create rule button.
+
+![Scheduled Orders](https://user-images.githubusercontent.com/98637502/216892139-a15c66c8-497a-4a2a-80e7-3a4a0bb2e976.jpg)
+
+Note : You can only use a scheduled expression for the default event bus.
+
+4. On the Create rule page:
+
+ - Add OrdersReconciliation as the Name of the rule
+ - Add Runs reconciliation routine on orders every minute Monday to Friday for Description
+ - Select Schedule for Rule type
+ - As we are still using the previous scheduler, you should click on the Continue to create rule button.
+
+![NewRuleForSchedule](https://user-images.githubusercontent.com/98637502/216892304-c415af5c-51b6-4fe8-a42e-1d9808633926.jpg)
+
+5. In Schedule Pattern select the left option, which represnts a cron expression.
+
+6. Add * * ? * MON-FRI * in the Cron expression.
+
+![DefineSchedule](https://user-images.githubusercontent.com/98637502/216892422-f023875a-9fee-46a8-8700-f2669457d289.jpg)
+
+This will schedule a message to be delivered every minute, Monday through Friday.
+
+7. Configure your target to be a CloudWatch log group
+
+ - Name the log group /aws/events/orders_reconciliation
+
+![SelectTarget](https://user-images.githubusercontent.com/98637502/216892678-ac0a0d12-46a5-494a-9e59-c152c4dbf30d.jpg)
+
+8. Click Next and finish walking through the rest of the walk-through to create the rule.
+
+### Verify scheduled message delivery
+
+1. Open the [AWS Management Console for Cloud Watch Log Group](https://ap-southeast-1.console.aws.amazon.com/cloudwatch/home?region=ap-southeast-1#logsV2:log-groups).
+
+2. Choose Log groups in the left navigation and select the /aws/events/orders_reconciliation log group.
+
+3. After a few minutes your streams for /aws/events/orders_reconciliation should look similar to this:
+
+![CloudWatchForSchedule](https://user-images.githubusercontent.com/98637502/216893513-760dce78-d163-45fc-a4d1-cef47929bf17.jpg)
+
+And thereby we hace completed our Event Driven Architecture using Amazon Event Bridge!!!
+
+
 
 
 
