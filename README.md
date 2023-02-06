@@ -405,6 +405,8 @@ If the event sent to the Orders event bus matches the pattern in your rule, then
 
 3. Enter OrderProcessing in the Search for state machines box and verify the state machine execution has succeeded.
 
+![Step Function](https://user-images.githubusercontent.com/98637502/216929763-989b16e8-e202-4bc2-bb9b-6f813dbcb504.jpg)
+
 Note :
 
 If you are not seeing any executions in your OrderProcessing state machine after successfully publishing an event, it is possible that there is an issue with the event or with the configuration of the state machine. Here are a few things to check:
