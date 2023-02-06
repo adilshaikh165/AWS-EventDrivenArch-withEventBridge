@@ -513,7 +513,15 @@ If the event sent to the Orders event bus matches the pattern in your rule, then
 
 4. Select Poll for Messages and verify the first message was delivered and the second was not.
 
+![SQS1](https://user-images.githubusercontent.com/98637502/216931836-5217d60e-264b-4b5b-8acd-1a36c2f04a52.jpg)
+
+![SQS2](https://user-images.githubusercontent.com/98637502/216931885-573a243e-8a17-4a20-92ff-fe6b35d9d2d5.jpg)
+
 5. To clean up, select the event, select the Delete button, and select the Delete button again on the Delete Messages confirmation dialog.
+
+![Delete1](https://user-images.githubusercontent.com/98637502/216932783-39efc1b5-786e-4d8c-9d3f-46e4dfa1b8eb.jpg)
+
+![Delete2](https://user-images.githubusercontent.com/98637502/216932847-ccb704b5-6798-460f-b977-a4add1cafe2f.jpg)
 
 Note :
 
